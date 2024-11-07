@@ -1,0 +1,77 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=password 
+
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend-express
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - node_modules_backend:/app/node_modules
+    env_file:
+      - ./.env
+    depends_on:
+      - mongodb
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: frontend-react
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./src:/app/src
+      - node_modules_frontend:/app/node_modules
+    env_file:
+      - ./.env
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+    app-network:
+      driver: bridge
+  
+volumes:
+    mongo-data:
+    node_modules_backend:
+    node_modules_frontend:
+
+  
+    
+
